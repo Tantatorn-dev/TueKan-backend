@@ -5,10 +5,12 @@ import (
 	"TueKan-backend/db"
 	"TueKan-backend/routes"
 	"TueKan-backend/thirdparty"
+	"TueKan-backend/util"
 	"fmt"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"log"
+	"time"
 )
 
 func main() {
@@ -43,6 +45,19 @@ func main() {
 	routes.Session(app)
 
 	var port = fmt.Sprintf(":%s", c.Port)
+
+	ticker := time.NewTicker(24 * time.Hour)
+	go func() {
+		for t := range ticker.C {
+			_ = t // we don't print the ticker time, so assign this `t` variable to underscore `_` to avoid error
+			err := util.ClearOutdatedPost(db.DB)
+			if err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Println("outdated posts cleared")
+			}
+		}
+	}()
 
 	app.Logger.Fatal(app.Start(port))
 }
